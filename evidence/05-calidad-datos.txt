@@ -1,0 +1,5 @@
+===== Incidente 5: excepciones por tipo =====
+     15 BENEFICIARIO_HUERFANO
+     14 CODIGO_INVALIDO
+     20 DUPLICADO
+     18 SIN_EMPRESA
