@@ -1,0 +1,31 @@
+{
+  "activos_header": "documento,nombre,estado,cod_empresa,empresa,beneficiarios,ultimo_aporte",
+  "api_sample": [
+    {
+      "documento": "3756530718",
+      "hash": "bd9d3b8fcef14dd105c00fd919c6f52584e82356192e60e7009d8364223c1962"
+    },
+    {
+      "documento": "88121168",
+      "hash": "6dd5c2da6b19b931fd4685731f9c9c077840bbdf943ab5133282e5452eff5416"
+    },
+    {
+      "documento": "6015866271",
+      "hash": "34a2c89c5fb69344a11847e945344dd9902045551ae62151b33ac4d8a2e6c890"
+    }
+  ],
+  "exceptions": {
+    "BENEFICIARIO_HUERFANO": "f5c7bdf503fb42e6bb690d453e314468c47043323fe488f78b8edfa19db04ca1",
+    "CODIGO_INVALIDO": "af6b3d6306eb657af042620b6dfe57e58e5b5d3743c3cafe30d3bf9d9ee66d30",
+    "CRUCE_NO_COINCIDE": "86660daac93705a9f87df44f9b06e66ec3edb4ecd7df6f84990bf56565965ef7",
+    "DUPLICADO": "8d1af2e6998818a647f7c4cece54e5f7422e7443bb391d7449b796cdcea3a7fe",
+    "FECHA_INVALIDA": "5880dd515d0e9ed15740b434aadf672572d68bc9885e84d7bd83bf21ce3dcdb1",
+    "SIN_EMPRESA": "35f97af6ecb97ccb06887e76761dd319fe5e07ac464f910c68ba10bf92715d31"
+  },
+  "known_document": "1098765432",
+  "level": "tecnico",
+  "missing_document": "0000000001",
+  "salt": "tecnico-2026",
+  "top_error": "60ed9007def3e1a9edada32c3f02120598915d88bf563f3be2983ebddbd96d18",
+  "top_error_code_only": "92bedaa8ef914714057b0a6171e3e27522dea610ea2f3adff15e51b204d509bd"
+}

@@ -1,0 +1,291 @@
+#!/usr/bin/env python3
+"""Validador del equipo — Terminal Rescue.
+
+Uso: ./validator check [--quick]
+     ./validator entregables [--desde AAAA-MM-DDTHH:MM]
+
+entregables revisa incident-report.md, evidence/, los scripts, Git y AI_USAGE.md con las
+mismas reglas y puntos del calificador oficial (no necesita Docker).
+
+check ejecuta la parte pública de las pruebas. No contiene las respuestas esperadas:
+compara contra huellas (hash con sal) o solo revisa la estructura. El validador
+oficial de la plataforma ejecuta además casos ocultos y otorga puntajes parciales.
+"""
+
+import csv
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+API = "http://localhost:{0}".format(os.environ.get("API_PORT", "8081"))
+SERVICES = ["cierre-db", "cierre-api", "cierre-worker"]
+OUTPUTS = ["afiliados_activos.csv", "excepciones.csv", "totales.txt", "top_error.txt"]
+CHECKS = [
+    ("T01", "Servicios arriba", 25),
+    ("T02", "API conectada", 25),
+    ("T03", "Entrada del cierre", 25),
+    ("T04", "Error mas frecuente", 50),
+    ("T05", "Calidad de datos", 75),
+    ("T06", "Consulta de afiliado", 75),
+    ("T07", "Fechas", 50),
+    ("T08", "Cruce Caja Oriente", 100),
+    ("T09", "Totales", 100),
+    ("T10", "Repetibilidad", 100),
+]
+
+
+def fingerprint(value, salt):
+    return hashlib.pbkdf2_hmac("sha256", value.encode("utf-8"), salt.encode("utf-8"), 200000).hex()
+
+
+def canonical_set(values):
+    return "\n".join(sorted(set(values)))
+
+
+def run(cmd, timeout=600):
+    return subprocess.run(cmd, cwd=HERE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout, universal_newlines=True)
+
+
+def http_get(url, timeout=5):
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
+            return resp.status, resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode("utf-8", "replace")
+    except Exception as exc:  # conexión rechazada, timeout
+        return None, str(exc)
+
+
+def compose_services():
+    proc = run(["docker", "compose", "ps", "--all", "--format", "json"], timeout=60)
+    text = proc.stdout.strip()
+    if proc.returncode != 0 or not text:
+        return {}
+    items = json.loads(text) if text.startswith("[") else [json.loads(line) for line in text.splitlines() if line.strip().startswith("{")]
+    return {item.get("Service"): item for item in items}
+
+
+def restart_counts(services):
+    counts = {}
+    for name, item in services.items():
+        proc = run(["docker", "inspect", "-f", "{{.RestartCount}}", item.get("ID", "")], timeout=30)
+        counts[name] = proc.stdout.strip()
+    return counts
+
+
+def read_kv(path):
+    data = {}
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            if "=" in line:
+                key, value = line.split("=", 1)
+                data[key.strip()] = value.strip()
+    return data
+
+
+def read_exceptions(path):
+    by_type = {}
+    with open(path, encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            by_type.setdefault((row.get("tipo") or "").strip(), set()).add((row.get("documento") or "").strip())
+    return by_type
+
+
+def snapshot():
+    result = {}
+    for name in OUTPUTS:
+        path = os.path.join(HERE, "output", name)
+        result[name] = open(path, "rb").read() if os.path.exists(path) else None
+    return result
+
+
+class Validator:
+    def __init__(self, quick):
+        self.quick = quick
+        self.public = json.load(open(os.path.join(HERE, ".validator.json"), encoding="utf-8"))
+        self.salt = self.public["salt"]
+        self.results = {}
+        self.details = {}
+        self.first_run = None
+
+    def record(self, check_id, fraction, detail=""):
+        self.results[check_id] = max(0.0, min(1.0, fraction))
+        if detail:
+            self.details[check_id] = detail
+
+    def t01(self):
+        services = compose_services()
+        running = [s for s in SERVICES if services.get(s, {}).get("State") == "running"]
+        if len(running) < len(SERVICES):
+            states = ", ".join("{0}={1}".format(s, services.get(s, {}).get("State", "ausente")) for s in SERVICES)
+            return self.record("T01", 0, states)
+        before = restart_counts({s: services[s] for s in SERVICES})
+        time.sleep(10 if self.quick else 60)
+        services = compose_services()
+        after = restart_counts({s: services[s] for s in SERVICES if s in services})
+        stable = all(services.get(s, {}).get("State") == "running" for s in SERVICES) and before == after
+        self.record("T01", 1 if stable else 0, "" if stable else "Algún servicio se reinició o cayó durante la espera")
+
+    def t02(self):
+        status, body = http_get("{0}/afiliados/{1}".format(API, self.public["known_document"]))
+        ok = status in (200, 404)
+        self.record("T02", 1 if ok else 0, "" if ok else "Respuesta: {0} {1}".format(status, body[:120]))
+
+    def t03(self):
+        try:
+            proc = run(["./run.sh"])
+        except Exception as exc:
+            return self.record("T03", 0, "No se pudo ejecutar ./run.sh: {0}".format(exc))
+        present = [n for n in OUTPUTS if os.path.exists(os.path.join(HERE, "output", n))]
+        fraction = (5 * (proc.returncode == 0) + 5 * len(present)) / 25.0
+        detail = "" if fraction == 1 else "código de salida {0}; archivos: {1}; {2}".format(proc.returncode, ", ".join(present) or "ninguno", proc.stdout.strip()[-200:])
+        self.record("T03", fraction, detail)
+        self.first_run = snapshot()
+
+    def t04(self):
+        path = os.path.join(HERE, "output", "top_error.txt")
+        if not os.path.exists(path):
+            return self.record("T04", 0, "Falta output/top_error.txt")
+        data = read_kv(path)
+        code, count = data.get("codigo_error", ""), data.get("ocurrencias", "")
+        if fingerprint("{0}={1}".format(code, count), self.salt) == self.public["top_error"]:
+            return self.record("T04", 1)
+        if fingerprint(code, self.salt) == self.public["top_error_code_only"]:
+            return self.record("T04", 0.5, "El código es correcto, el conteo no")
+        self.record("T04", 0, "Código o conteo incorrectos")
+
+    def exceptions(self):
+        path = os.path.join(HERE, "output", "excepciones.csv")
+        return read_exceptions(path) if os.path.exists(path) else None
+
+    def t05(self):
+        found = self.exceptions()
+        if found is None:
+            return self.record("T05", 0, "Falta output/excepciones.csv")
+        types = ["DUPLICADO", "SIN_EMPRESA", "BENEFICIARIO_HUERFANO", "CODIGO_INVALIDO"]
+        good = [t for t in types if fingerprint(canonical_set(found.get(t, set())), self.salt) == self.public["exceptions"][t]]
+        missing = [t for t in types if t not in good]
+        self.record("T05", len(good) / 4.0, "" if not missing else "No coinciden exactamente: " + ", ".join(missing))
+
+    def t06(self):
+        ok, notes = 0, []
+        cases = self.public["api_sample"]
+        for case in cases:
+            status, body = http_get("{0}/afiliados/{1}".format(API, case["documento"]))
+            try:
+                data = json.loads(body)
+                key = "|".join([" ".join(str(data.get("nombre", "")).upper().split()), str(data.get("estado", "")).upper(), str(data.get("empresa", ""))])
+            except ValueError:
+                key = ""
+            if status == 200 and fingerprint(key, self.salt) == case["hash"] and str(data.get("documento")) == case["documento"]:
+                ok += 1
+            else:
+                notes.append("{0} -> {1}".format(case["documento"], status))
+        status, _ = http_get("{0}/afiliados/{1}".format(API, self.public["missing_document"]))
+        if status == 404:
+            ok += 1
+        else:
+            notes.append("inexistente -> {0} (se esperaba 404)".format(status))
+        self.record("T06", ok / float(len(cases) + 1), "; ".join(notes))
+
+    def t07(self):
+        found = self.exceptions()
+        if found is None:
+            return self.record("T07", 0, "Falta output/excepciones.csv")
+        ok = fingerprint(canonical_set(found.get("FECHA_INVALIDA", set())), self.salt) == self.public["exceptions"]["FECHA_INVALIDA"]
+        self.record("T07", 1 if ok else 0, "" if ok else "FECHA_INVALIDA no coincide con lo esperado")
+
+    def t08(self):
+        path = os.path.join(HERE, "output", "afiliados_activos.csv")
+        header_ok = os.path.exists(path) and open(path, encoding="utf-8").readline().strip() == self.public["activos_header"]
+        found = self.exceptions() or {}
+        cruce_ok = fingerprint(canonical_set(found.get("CRUCE_NO_COINCIDE", set())), self.salt) == self.public["exceptions"]["CRUCE_NO_COINCIDE"]
+        notes = []
+        if not header_ok:
+            notes.append("encabezado de afiliados_activos.csv distinto al contrato")
+        if not cruce_ok:
+            notes.append("CRUCE_NO_COINCIDE no coincide")
+        self.record("T08", 0.2 * header_ok + 0.8 * cruce_ok, "; ".join(notes))
+
+    def t09(self):
+        path = os.path.join(HERE, "output", "totales.txt")
+        if not os.path.exists(path):
+            return self.record("T09", 0, "Falta output/totales.txt")
+        totals = read_kv(path)
+        control = {}
+        with open(os.path.join(HERE, "control", "hoja_control.csv"), encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                control[row["clave"]] = row["valor"]
+        keys = ["total_afiliados", "activos", "inactivos"]
+        good = [k for k in keys if totals.get(k) == control.get(k)]
+        bad = [k for k in keys if k not in good]
+        detail = "No cuadran: " + ", ".join(bad) if bad else "La clave 'excepciones' se valida contra el control oculto del calificador oficial"
+        self.record("T09", len(good) / 3.0, detail)
+
+    def t10(self):
+        if self.first_run is None or not any(self.first_run.values()):
+            return self.record("T10", 0, "run.sh no generó salidas en la primera ejecución")
+        try:
+            proc = run(["./run.sh"])
+        except Exception as exc:
+            return self.record("T10", 0, "Segunda ejecución falló: {0}".format(exc))
+        same = proc.returncode == 0 and snapshot() == self.first_run
+        detail = "Segunda ejecución idéntica (el oficial también prueba tras ./reset.sh)" if same else "La segunda ejecución falló o produjo salidas distintas"
+        self.record("T10", 1 if same else 0, detail)
+
+    def run_all(self):
+        for check_id, _, _ in CHECKS:
+            try:
+                getattr(self, check_id.lower())()
+            except Exception as exc:
+                self.record(check_id, 0, "Error del validador: {0}".format(exc))
+
+
+def print_table(title, checks, results, details):
+    width = 40
+    print("=" * width)
+    print(title.center(width).rstrip())
+    print("=" * width)
+    total_points, max_points, passed = 0, 0, 0
+    for check_id, name, points in checks:
+        fraction = results.get(check_id, 0.0)
+        earned = int(round(points * fraction))
+        status = "PASS" if fraction >= 0.999 else ("PARCIAL" if fraction > 0 else "FAIL")
+        passed += status == "PASS"
+        total_points += earned
+        max_points += points
+        label = "{0} {1} ".format(check_id, name).ljust(29, ".")
+        print("{0} {1} {2}".format(label, status.ljust(7), ("+" + str(earned)).rjust(4)))
+    print("-" * width)
+    print("PRUEBAS: {0} / {1}   PUNTOS: {2} / {3}".format(passed, len(checks), total_points, max_points))
+    if details:
+        print()
+        for check_id, _, _ in checks:
+            if check_id in details:
+                print("  {0}: {1}".format(check_id, details[check_id]))
+
+
+def entregables(args):
+    return subprocess.call([sys.executable, os.path.join(HERE, ".entregables.py")] + list(args), cwd=HERE)
+
+
+def main(argv):
+    if len(argv) >= 2 and argv[1] == "entregables":
+        return entregables(argv[2:])
+    if len(argv) < 2 or argv[1] != "check":
+        print(__doc__)
+        return 2
+    validator = Validator(quick="--quick" in argv)
+    validator.run_all()
+    print_table("TERMINAL RESCUE VALIDATOR", CHECKS, validator.results, validator.details)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

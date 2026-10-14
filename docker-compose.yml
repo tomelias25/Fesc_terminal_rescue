@@ -1,0 +1,37 @@
+name: terminal-rescue
+
+services:
+  cierre-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cierre}
+      POSTGRES_USER: ${POSTGRES_USER:-cierre}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cierre}
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./data:/data:ro
+      - cierre-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  cierre-api:
+    build: ./services/api
+    env_file: .env
+    ports:
+      - "${API_PORT:-8081}:8081"
+    depends_on:
+      cierre-db:
+        condition: service_healthy
+
+  cierre-worker:
+    build: ./services/worker
+    env_file: .env
+    depends_on:
+      cierre-db:
+        condition: service_healthy
+
+volumes:
+  cierre-db-data:
