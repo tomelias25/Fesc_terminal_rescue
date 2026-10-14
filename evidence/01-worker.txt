@@ -3,3 +3,10 @@ terminal-rescue-cierre-api-1      terminal-rescue-cierre-api      "python app.py
 terminal-rescue-cierre-db-1       postgres:16-alpine              "docker-entrypoint.s…"   cierre-db       5 hours ago   Up 5 hours (healthy)     5432/tcp
 terminal-rescue-cierre-worker-1   terminal-rescue-cierre-worker   "python worker.py"       cierre-worker   5 hours ago   Exited (1) 5 hours ago   
 cierre-worker-1  | [2026-10-14T15:12:26Z] [ERROR] codigo=CIE-1107 WORKER_INTERVAL_SECONDS debe ser un entero de segundos; valor recibido: '30s'
+
+===== DESPUES DE LA CORRECCION: WORKER_INTERVAL_SECONDS=30 =====
+NAME                              IMAGE                           COMMAND                  SERVICE         CREATED              STATUS                   PORTS
+terminal-rescue-cierre-api-1      terminal-rescue-cierre-api      "python app.py"          cierre-api      6 minutes ago        Up 5 minutes             0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
+terminal-rescue-cierre-db-1       postgres:16-alpine              "docker-entrypoint.s…"   cierre-db       6 minutes ago        Up 5 minutes (healthy)   5432/tcp
+terminal-rescue-cierre-worker-1   terminal-rescue-cierre-worker   "python worker.py"       cierre-worker   About a minute ago   Up About a minute        
+cierre-worker-1  | [2026-10-14T20:28:59Z] [INFO] cierre-worker iniciado; intervalo=30s
