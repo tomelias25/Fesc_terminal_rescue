@@ -1,0 +1,23 @@
+===== ANTES: dos corridas seguidas con el cierre heredado =====
+Leyendo afiliados desde data/AFI_MAE.csv
+Cierre terminado
+--- contenido de data/ y data/procesados tras la primera corrida (AFI_MAE.csv fue movido) ---
+data:
+AFI_BEN.csv
+APORTES.csv
+EMPRESA.csv
+extracto_caja_oriente.csv
+procesados
+
+data/procesados:
+AFI_MAE.csv
+--- segunda corrida ---
+mkdir: output: File exists
+codigo de salida segunda corrida: 1
+
+===== DESPUES: cierre.py (no modifica data/, sobrescribe output/) =====
+0aa760981fa74fcece4765dc29dede50  output/afiliados_activos.csv
+09cac572d5272dd395e51713af3a8f5c  output/excepciones.csv
+2f4811bf8c1ab65ec5bb8def9b9e0a76  output/totales.txt
+89b4d9ab3a279c717acc1576267afcb9  output/top_error.txt
+diff entre corrida 1 y 2: sin diferencias (IGUAL)
