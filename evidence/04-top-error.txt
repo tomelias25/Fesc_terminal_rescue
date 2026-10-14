@@ -1,0 +1,17 @@
+===== Incidente 4: codigo CIE mas frecuente (logs/api.log, worker.log, database.log) =====
+   1424 CIE-4012
+    700 CIE-5003
+    460 CIE-2210
+    298 CIE-3301
+    158 CIE-1107
+
+
+===== Contenido de scripts/top_error.sh =====
+#!/usr/bin/env bash
+# Incidente 4: identifica el codigo CIE mas frecuente en los logs
+mkdir -p output
+cat logs/api.log logs/worker.log logs/database.log | grep 'ERROR' | grep -o 'CIE-[0-9][0-9][0-9][0-9]' | sort | uniq -c | sort -rn | head -1 | awk '{print "codigo_error=" $2; print "ocurrencias=" $1}' > output/top_error.txt
+===== Resultado: output/top_error.txt 
+=====
+codigo_error=CIE-4012
+ocurrencias=1424
