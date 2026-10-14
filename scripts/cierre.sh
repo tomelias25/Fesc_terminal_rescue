@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 set -e
 
-ENTRADA=/opt/cierre/entrada
+ENTRADA=data
 SALIDA=output
 
 mkdir $SALIDA

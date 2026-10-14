@@ -1,0 +1,9 @@
+===== ANTES: cierre.sh lee /opt/cierre/entrada =====
+Leyendo afiliados desde /opt/cierre/entrada/AFI_MAE.csv
+awk: fatal: cannot open file `/opt/cierre/entrada/AFI_MAE.csv' for reading: No such file or directory
+codigo de salida: 2
+
+===== DESPUES: ENTRADA=data =====
+Leyendo afiliados desde data/AFI_MAE.csv
+Cierre terminado
+codigo de salida: 0
