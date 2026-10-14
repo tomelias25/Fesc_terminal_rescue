@@ -1,0 +1,54 @@
+===== ANTES: GET /afiliados/3756530718 responde 500 =====
+HTTP/1.0 500 Internal Server Error
+Server: BaseHTTP/0.6 Python/3.12.15
+Date: Wed, 14 Oct 2026 21:42:11 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 26
+
+{"error": "error interno"}cierre-api-1  | 2026-10-14 21:36:36,226 INFO [cierre-api] cierre-api escuchando en el puerto 8081 (base: cierre-db)
+cierre-api-1  | 2026-10-14 21:38:56,014 ERROR [cierre-api] CIE-5003 Error interno consultando afiliado documento=3756530718
+cierre-api-1  | Traceback (most recent call last):
+cierre-api-1  |   File "/app/app.py", line 74, in do_GET
+cierre-api-1  |     member = find_member(documento)
+cierre-api-1  |              ^^^^^^^^^^^^^^^^^^^^^^
+cierre-api-1  |   File "/app/app.py", line 53, in find_member
+cierre-api-1  |     nombre = nom1 + " " + nom2 + " " + ape1 + " " + ape2
+cierre-api-1  |              ~~~~~~~~~~~^~~~~~
+cierre-api-1  | TypeError: can only concatenate str (not "NoneType") to str
+cierre-api-1  | 
+cierre-api-1  | 2026-10-14 21:42:11,582 ERROR [cierre-api] CIE-5003 Error interno consultando afiliado documento=3756530718
+cierre-api-1  | Traceback (most recent call last):
+cierre-api-1  |   File "/app/app.py", line 74, in do_GET
+cierre-api-1  |     member = find_member(documento)
+cierre-api-1  |              ^^^^^^^^^^^^^^^^^^^^^^
+cierre-api-1  |   File "/app/app.py", line 53, in find_member
+cierre-api-1  |     nombre = nom1 + " " + nom2 + " " + ape1 + " " + ape2
+cierre-api-1  |              ~~~~~~~~~~~^~~~~~
+cierre-api-1  | TypeError: can only concatenate str (not "NoneType") to str
+cierre-api-1  | 
+  nro_doc   | tip_doc |   nom1   | nom2 |  ape1  |    ape2     | est_afi | cod_emp |  fec_afi   
+------------+---------+----------+------+--------+-------------+---------+---------+------------
+ 3756530718 | CC      | CAROLINA |      | CASTRO | CASTELLANOS | A       | 1002    | 2015-03-18
+(1 row)
+
+
+===== DESPUES DE LA CORRECCION =====
+HTTP/1.0 200 OK
+Server: BaseHTTP/0.6 Python/3.12.15
+Date: Wed, 14 Oct 2026 22:23:02 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 131
+
+{"documento": "3756530718", "nombre": "CAROLINA CASTRO CASTELLANOS", "estado": "ACTIVO", "empresa": "CONSTRUCTORA SAN LUIS S EN C"}HTTP/1.0 200 OK
+Server: BaseHTTP/0.6 Python/3.12.15
+Date: Wed, 14 Oct 2026 22:23:10 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 131
+
+{"documento": "88121168", "nombre": "VALENTINA SANCHEZ SILVA", "estado": "INACTIVO", "empresa": "AGROPECUARIA LA ESPERANZA S EN C"}HTTP/1.0 404 Not Found
+Server: BaseHTTP/0.6 Python/3.12.15
+Date: Wed, 14 Oct 2026 22:23:14 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 35
+
+{"error": "afiliado no encontrado"}

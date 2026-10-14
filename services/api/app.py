@@ -50,8 +50,9 @@ def find_member(documento):
     if row is None:
         return None
     nro_doc, nom1, nom2, ape1, ape2, est_afi, nom_emp = row
-    nombre = nom1 + " " + nom2 + " " + ape1 + " " + ape2
-    return {"documento": nro_doc, "nombre": nombre.strip(), "estado": ESTADOS[est_afi], "empresa": nom_emp}
+    partes = [nom1, nom2, ape1, ape2]
+    nombre = " ".join(p.strip() for p in partes if p and p.strip())
+    return {"documento": nro_doc, "nombre": nombre, "estado": ESTADOS.get((est_afi or "").strip(), "DESCONOCIDO"), "empresa": nom_emp}
 
 
 class Handler(BaseHTTPRequestHandler):
