@@ -1,0 +1,12 @@
+cierre-api-1  | 2026-10-14 15:12:31,315 ERROR [cierre-api] CIE-2210 No hay conexión con la base de datos: could not translate host name "cierre-database" to address: No address associated with hostname
+cierre-api-1  | 2026-10-14 15:12:35,176 ERROR [cierre-api] CIE-2210 No hay conexión con la base de datos: could not translate host name "cierre-database" to address: Name or service not known
+cierre-api-1  | 2026-10-14 15:12:39,030 ERROR [cierre-api] CIE-2210 No hay conexión con la base de datos: could not translate host name "cierre-database" to address: Name or service not known
+cierre-api-1  | 2026-10-14 15:12:42,866 ERROR [cierre-api] CIE-2210 No hay conexión con la base de datos: could not translate host name "cierre-database" to address: Name or service not known
+cierre-api-1  | 2026-10-14 15:12:46,701 ERROR [cierre-api] CIE-2210 No hay conexión con la base de datos: could not translate host name "cierre-database" to address: Name or service not known
+HTTP/1.0 503 Service Unavailable
+Server: BaseHTTP/0.6 Python/3.12.15
+Date: Wed, 14 Oct 2026 16:44:47 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 40
+
+{"error": "base de datos no disponible"}
