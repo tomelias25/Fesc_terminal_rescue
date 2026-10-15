@@ -1,0 +1,26 @@
+===== Incidente 8: cruce con Caja Oriente (VIGENTE=A, RETIRADO=I, documentos sin ceros iniciales) =====
+6060554836,CRUCE_NO_COINCIDE,Caja Oriente dice RETIRADO y nuestro estado es 'A'
+1008958781,CRUCE_NO_COINCIDE,Caja Oriente dice RETIRADO y nuestro estado es 'A'
+1002471016,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+60638164,CRUCE_NO_COINCIDE,Caja Oriente dice RETIRADO y nuestro estado es 'A'
+1043196119,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+3741495054,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+1027394279,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+3739675472,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+1000385358,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+6039035908,CRUCE_NO_COINCIDE,Caja Oriente dice RETIRADO y nuestro estado es 'A'
+13198168,CRUCE_NO_COINCIDE,Caja Oriente dice RETIRADO y nuestro estado es 'A'
+1057370088,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+1307174900,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+3719889042,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+8832988347,CRUCE_NO_COINCIDE,Caja Oriente dice RETIRADO y nuestro estado es 'A'
+13857633,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+3785034513,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+1084155486,CRUCE_NO_COINCIDE,Caja Oriente dice RETIRADO y nuestro estado es 'A'
+60838637,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+1013042442,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+1027899673,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+88647779,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+1021958956,CRUCE_NO_COINCIDE,Caja Oriente dice VIGENTE y nuestro estado es 'I'
+60213545,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
+1032087547,CRUCE_NO_COINCIDE,el documento no existe en AFI_MAE
