@@ -1,0 +1,11 @@
+===== Incidente 9: totales del cierre contra la hoja de control =====
+total_afiliados=1500
+activos=1194
+inactivos=274
+excepciones=104
+--- control/hoja_control.csv ---
+clave,valor
+fecha_corte,2026-09-30
+total_afiliados,1500
+activos,1194
+inactivos,274
