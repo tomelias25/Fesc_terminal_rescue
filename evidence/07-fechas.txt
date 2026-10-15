@@ -1,0 +1,13 @@
+===== Incidente 7: fechas invalidas (formatos validos: YYYY-MM-DD, DD/MM/YYYY, YYYYMMDD) =====
+1044259063,FECHA_INVALIDA,FEC_AFI '2025-02-30' no es una fecha valida
+8830134354,FECHA_INVALIDA,FEC_AFI '2025-02-30' no es una fecha valida
+1052051148,FECHA_INVALIDA,FEC_AFI '31/13/2024' no es una fecha valida
+3757045739,FECHA_INVALIDA,FEC_AFI '00000000' no es una fecha valida
+1058468350,FECHA_INVALIDA,FEC_AFI 'SIN FECHA' no es una fecha valida
+3709342692,FECHA_INVALIDA,FEC_AFI '2024-00-10' no es una fecha valida
+6089354914,FECHA_INVALIDA,FEC_AFI '31/13/2024' no es una fecha valida
+60692566,FECHA_INVALIDA,FEC_AFI 'SIN FECHA' no es una fecha valida
+8874391659,FECHA_INVALIDA,FEC_AFI '00000000' no es una fecha valida
+6026309765,FECHA_INVALIDA,FEC_AFI 'N/A' no es una fecha valida
+8803649849,FECHA_INVALIDA,FEC_AFI '2023/02/29' no es una fecha valida
+60087263,FECHA_INVALIDA,FEC_AFI '15-15-2019' no es una fecha valida

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cierre mensual de afiliados activos (etapa 1).
+"""Cierre mensual de afiliados activos.
 
 Lee los CSV de data/ SIN modificarlos y genera en output/:
   - afiliados_activos.csv
@@ -12,6 +12,8 @@ produce siempre el mismo resultado con los mismos datos.
 """
 
 import csv
+import re
+from datetime import datetime
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -22,6 +24,29 @@ SALIDA = RAIZ / "output"
 def leer_csv(nombre, delimitador=","):
     with open(DATA / nombre, newline="", encoding="utf-8-sig") as f:
         return list(csv.DictReader(f, delimiter=delimitador))
+
+
+# Regla 6: equivalencia entre la situacion de Caja Oriente y nuestro estado.
+SITUACION_A_ESTADO = {"VIGENTE": "A", "RETIRADO": "I"}
+
+# Regla 5: formatos de fecha aceptados (se normalizan a YYYY-MM-DD).
+PATRONES_FECHA = (
+    (re.compile(r"^\d{4}-\d{2}-\d{2}$"), "%Y-%m-%d"),
+    (re.compile(r"^\d{2}/\d{2}/\d{4}$"), "%d/%m/%Y"),
+    (re.compile(r"^\d{8}$"), "%Y%m%d"),
+)
+
+
+def normalizar_fecha(texto):
+    """Devuelve la fecha como YYYY-MM-DD, o None si no es una fecha real."""
+    texto = texto.strip()
+    for patron, formato in PATRONES_FECHA:
+        if patron.match(texto):
+            try:
+                return datetime.strptime(texto, formato).strftime("%Y-%m-%d")
+            except ValueError:
+                return None
+    return None
 
 
 def nombre_completo(fila):
@@ -97,8 +122,21 @@ def main():
             ultimo_aporte.get(doc, ""),
         ])
 
-    # ETAPA 2 (incidente 7): normalizar FEC_AFI y reportar FECHA_INVALIDA.
-    # ETAPA 3 (incidente 8): cruce con extracto_caja_oriente.csv.
+    # Regla 5: la fecha invalida se reporta, pero el afiliado NO sale de los totales.
+    for doc, fila in afiliados.items():
+        if normalizar_fecha(fila["FEC_AFI"]) is None:
+            excepciones.append((doc, "FECHA_INVALIDA", "FEC_AFI '{0}' no es una fecha valida".format(fila["FEC_AFI"].strip())))
+
+    # Regla 6: cruce con Caja Oriente. Sus documentos vienen con ceros a la izquierda
+    # (12 digitos), asi que se comparan sin ceros iniciales.
+    estado_por_documento = {doc.lstrip("0"): fila["EST_AFI"].strip() for doc, fila in afiliados.items()}
+    for fila in leer_csv("extracto_caja_oriente.csv", ";"):
+        doc = fila["id_afiliado"].strip().lstrip("0")
+        situacion = fila["situacion"].strip().upper()
+        if doc not in estado_por_documento:
+            excepciones.append((doc, "CRUCE_NO_COINCIDE", "el documento no existe en AFI_MAE"))
+        elif estado_por_documento[doc] != SITUACION_A_ESTADO.get(situacion):
+            excepciones.append((doc, "CRUCE_NO_COINCIDE", "Caja Oriente dice {0} y nuestro estado es '{1}'".format(situacion, estado_por_documento[doc])))
 
     SALIDA.mkdir(exist_ok=True)
 
